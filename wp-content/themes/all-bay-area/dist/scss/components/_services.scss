@@ -1,0 +1,164 @@
+.header-image--service {
+    & .btn.btn--yellow {
+        @include mq-min($bpMedium) {
+            display: none;
+        }
+    }
+}
+
+.services-service {
+    width: calc(100% - 72px);
+    margin-top: 7.2rem;
+    border-bottom: 1px solid $black;
+    @include margin-x;
+    padding-bottom: 58px;
+    & h2 {
+        @include title(24px, 15px, $font_02, uppercase);
+        margin-bottom: 20px;
+    }
+    & .about-content {
+        & p {
+            @extend .text;
+            line-height: 1.7;
+            letter-spacing: 0.05em;
+            &:not(:last-of-type) {
+                margin-bottom: 10px;
+            }
+        }
+    }
+    & .btn.btn--yellow {
+        padding: 5px 0;
+        margin-top: 43px;
+    }
+    @include mq-min($bpMedium) {
+        border: none;
+        max-width: 100rem;
+        width: 100%;
+    }
+}
+
+.service-item {
+    background-color: rgba(0, 80, 123, 0.5);
+    ;
+    background-position: center center;
+    background-size: cover;
+    background-blend-mode: multiply;
+    width: 100%;
+    padding: 70px 36px;
+    margin-bottom: 3rem;
+    margin-top: 5rem;
+    @include margin-x;
+    @include mq-min($bpMedium) {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        column-gap: 5rem;
+        &:nth-of-type(odd) {
+            & figure {
+                border-radius: 0;
+                grid-column: 1/2;
+                grid-row: 1/2;
+                & img {
+                    margin-left: auto;
+                }
+            }
+            & .service-item__info {
+                grid-column: 2/3;
+                grid-row: 1/2;
+            }
+        }
+        &:nth-of-type(even) {
+            & figure {
+                grid-column: 2/3;
+                grid-row: 1/2;
+            }
+            & .service-item__info {
+                grid-column: 1/2;
+                justify-self: flex-end;
+                grid-row: 1/2;
+            }
+        }
+    }
+    &>figure {
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 39px;
+        @include mq-min($bpMedium) {
+            margin-bottom: 0;
+            border-radius: 0;
+        }
+        & img {
+            object-fit: cover;
+            @include mq-min($bpSmall) {
+                @include margin-x;
+            }
+            @include mq-min($bpMedium) {
+                border-radius: 0;
+                width: 55rem;
+                height: 50rem;
+                margin: 0;
+            }
+        }
+    }
+    & h2 {
+        @include title(24px, 14px, $font_02, uppercase);
+        width: 80%;
+        @include mq-min($bpSmall) {
+            @include margin-x;
+            & * {
+                text-align: center;
+                @include mq-min($bpMedium) {
+                    text-align: left;
+                }
+            }
+        }
+        @include mq-min($bpMedium) {
+            width: 70%;
+            margin-left: 0;
+        }
+        & strong {
+            text-align: left;
+            color: $white;
+            @include mq-min($bpSmall) {
+                text-align: center;
+            }
+            @include mq-min($bpMedium) {
+                text-align: left;
+            }
+        }
+    }
+    &__info {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        max-width: 450px;
+    }
+    & p {
+        margin-top: 32px;
+        @extend .text;
+        color: $white;
+        line-height: 1.7;
+    }
+    & .swiper-pagination {
+        &.swiper-pagination-bullets {
+            & .swiper-pagination-bullet {
+                background-color: $white;
+                opacity: 1;
+                width: 10px;
+                height: 10px;
+                &-active {
+                    background-color: $yellow;
+                }
+            }
+        }
+    }
+    & .btn.btn--yellow {
+        margin-top: 45px;
+        padding: 5px 0;
+        display: block;
+        @include margin-x;
+        @include mq-min($bpMedium) {
+            margin-left: 0;
+            margin-top: 30px;
+        }
+    }
+}

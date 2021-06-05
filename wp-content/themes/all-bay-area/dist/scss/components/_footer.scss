@@ -1,0 +1,25 @@
+.footer {
+    @include footer(#002D45, 4rem, 8rem, 5rem, 9rem, $white);
+    @include mq($bpMedium) {
+        padding: 40px 30px 60px 30px;
+        padding-bottom: 8rem;
+    }
+    & .logo {
+        & img {
+            height: 19.3rem;
+            width: 13rem;
+            @include mq($bpLarge) {
+                width: 75px;
+                height: 100px;
+            }
+        }
+    }
+    & em {
+        color: $white;
+        font-style: normal;
+    }
+}
+
+.footer-title-1 {
+    color: $white;
+}

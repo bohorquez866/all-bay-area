@@ -1,0 +1,79 @@
+.about-head {
+    &__photo {
+        display: none;
+    }
+    @include mq-min($bpMedium) {
+        &__photo {
+            display: initial;
+            & img {
+                width: 482px;
+                height: 487px;
+            }
+        }
+        &.home-about .about-content {
+            grid-column: 1/2;
+        }
+    }
+}
+
+.about-value {
+    position: relative;
+    padding-bottom: 0;
+    & p {
+        width: 80%;
+        @include margin-x;
+    }
+    & .swiper-pagination-bullets {
+        bottom: -8%;
+        & .swiper-pagination-bullet {
+            background-color: grey;
+            opacity: 1;
+            width: 10px;
+            height: 10px;
+            &-active {
+                background-color: $yellow;
+            }
+        }
+    }
+    @include mq-min($bpMedium) {
+        & .home-value__item {
+            width: 20%;
+        }
+    }
+}
+
+.contact-about {
+    background-color: $cream;
+    width: 100%;
+    padding: 80px 36px;
+    margin-top: 0;
+    @include mq-min($bpMedium) {
+        & .about-content {
+            grid-column: 1/2;
+            justify-self: flex-end;
+        }
+    }
+    & h2 {
+        margin-top: 48px;
+        & p {
+            margin-top: 0;
+        }
+    }
+    & img {
+        max-width: 215px;
+        height: 211px;
+        border-radius: 10px;
+        @include margin-x;
+        @include mq-min($bpMedium) {
+            width: 482px;
+            max-width: initial;
+            height: 487px;
+            border-radius: 0;
+        }
+    }
+    & p {
+        line-height: 1.7;
+        letter-spacing: 0.05em;
+        margin-top: 30px;
+    }
+}

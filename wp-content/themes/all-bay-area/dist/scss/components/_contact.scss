@@ -1,0 +1,82 @@
+.contact {
+    border-bottom: none;
+    &>p {
+        @extend .text
+    }
+    &_list {
+        margin-top: 28px;
+        margin-bottom: 59px;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        & li {
+            @extend .text;
+            font-family: $font_02;
+            position: relative;
+            @include mq-min($bpSmall) {
+                margin-left: 27%;
+            }
+            &::before {
+                width: 4px;
+                height: 4px;
+                display: block;
+                position: absolute;
+                content: '';
+                background-color: $black;
+                left: -15px;
+                top: 40%;
+                border-radius: 30px;
+            }
+        }
+    }
+    &__form {
+        & label {
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 13px;
+            font-family: $font_01;
+            color: $black;
+            display: block;
+            margin-bottom: 15px;
+        }
+        & .contact__input {
+            width: 100%;
+            padding: 8px 2rem;
+            font-family: $font_02;
+            &,
+            &::placeholder {
+                font-weight: normal;
+                font-size: 15px;
+                line-height: 13px;
+            }
+        }
+        & select {
+            display: block;
+            appearance: none;
+            position: relative;
+            &::After {
+                //
+                right: 2rem;
+                top: 40%;
+                content: "+";
+                position: absolute;
+                color: $black;
+                display: block;
+                width: 10px;
+                height: 10px;
+            }
+        }
+        & textarea {
+            height: 100px;
+        }
+        & .btn.btn--yellow {
+            width: 100%;
+            margin-top: 30px;
+        }
+        & div {
+            &:not(:last-of-type) {
+                margin-bottom: 27px;
+            }
+        }
+    }
+}
