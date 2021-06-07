@@ -319,7 +319,7 @@
         &__contact.responsive {
             padding: 4rem 0;
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 6fr 1fr;
             align-items: center;
             & h3 {
                 grid-column: 1/-1;
@@ -339,7 +339,7 @@
                 width: fit-content;
                 padding-left: 0;
                 margin-right: 0;
-                margin-left: auto;
+                margin-left: 0;
                 border: none;
                 text-align: left;
                 & * {
