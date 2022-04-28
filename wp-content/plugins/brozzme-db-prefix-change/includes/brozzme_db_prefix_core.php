@@ -6,9 +6,16 @@
  * Date: 14/06/2017
  * Time: 22:00
  */
+
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 class brozzme_db_prefix_core
 {
 
+    /**
+     * @param $wpConfigFilePath
+     * @return bool
+     */
     public static function dbprefix_wpConfigCheckPermissions($wpConfigFilePath)
     {
         if (!is_writable($wpConfigFilePath)) {
@@ -23,6 +30,12 @@ class brozzme_db_prefix_core
         return true;
     }
 
+    /**
+     * @param $dbprefix_wpConfigFile
+     * @param $oldPrefix
+     * @param $newPrefix
+     * @return bool|int
+     */
     public static function dbprefix_updateWpConfigTablePrefix($dbprefix_wpConfigFile, $oldPrefix, $newPrefix)
     {
         // Check file' status's permissions
@@ -56,11 +69,22 @@ class brozzme_db_prefix_core
 
         return $result;
     }
+
+    /**
+     * @return mixed
+     */
     public static function dbprefix_getTablesToAlter()
     {
         global $wpdb;
         return $wpdb->get_results("SHOW TABLES LIKE '".$GLOBALS['table_prefix']."%'", ARRAY_N);
     }
+
+    /**
+     * @param $tables
+     * @param $currentPrefix
+     * @param $newPrefix
+     * @return array
+     */
     public static function dbprefix_renameTables($tables, $currentPrefix, $newPrefix)
     {
         global $wpdb;
@@ -78,7 +102,13 @@ class brozzme_db_prefix_core
         }
         return $changedTables;
     }
-    public static function dbprefix_renameDbFields($oldPrefix,$newPrefix)
+
+    /**
+     * @param $oldPrefix
+     * @param $newPrefix
+     * @return string
+     */
+    public static function dbprefix_renameDbFields($oldPrefix, $newPrefix)
     {
         global $wpdb;
         /*
@@ -91,11 +121,11 @@ class brozzme_db_prefix_core
         */
         $str = '';
         if (false === $wpdb->query("UPDATE {$newPrefix}options SET option_name='{$newPrefix}user_roles' WHERE option_name='{$oldPrefix}user_roles';")) {
-            $str .= '<br/>Changing value: '.$newPrefix.'user_roles in table <strong>'.$newPrefix.'options</strong>: <font color="#ff0000">Failed</font>';
+            $str .= '<br/>Changing value: '.$newPrefix.'user_roles in table <strong>'.$newPrefix.'options</strong>:  <span style="color: #ff0000">Failed</span>';
         }
         $query = 'update '.$newPrefix.'usermeta set meta_key = CONCAT(replace(left(meta_key, ' . strlen($oldPrefix) . "), '{$oldPrefix}', '{$newPrefix}'), SUBSTR(meta_key, " . (strlen($oldPrefix) + 1) . ")) where meta_key in ('{$oldPrefix}autosave_draft_ids', '{$oldPrefix}capabilities', '{$oldPrefix}metaboxorder_post', '{$oldPrefix}user_level', '{$oldPrefix}usersettings','{$oldPrefix}usersettingstime', '{$oldPrefix}user-settings', '{$oldPrefix}user-settings-time', '{$oldPrefix}dashboard_quick_press_last_post_id')";
         if (false === $wpdb->query($query)) {
-            $str .= '<br/>Changing values in table <strong>'.$newPrefix.'usermeta</strong>: <font color="#ff0000">Failed</font>';
+            $str .= '<br/>Changing values in table <strong>'.$newPrefix.'usermeta</strong>: <span style="color: #ff0000">Failed</span>';
         }
         if (!empty($str)) {
             $str = '<br/><p>Changing database prefix:</p><p>'.$str.'</p>';

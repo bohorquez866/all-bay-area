@@ -3,8 +3,8 @@ Contributors: Benoti, benoitgeek
 Tags: database, prefix, security, config, tools, dump, export, protection, db-prefix, _wp
 Donate link: https://brozzme.com/
 Requires at least: 4.7
-Tested up to: 5.3
-Stable tag: trunk
+Tested up to: 5.9
+Stable tag: 1.3.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -78,7 +78,14 @@ Only use lower-case characters to solve this.
 2. french tool control screenshot-2.png.
 
 == Changelog ==
-
+= 1.3.2 =
+bugfixes
+= 1.3.1 =
+bugfixes for notices
+= 1.3 =
+* Add mysql dump tab
+= 1.2.2 =
+* PHP8.0 compatibility
 = 1.2 =
 * get right path to wp-config -thx @victorfreitas
 = 1.1 =

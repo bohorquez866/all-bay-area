@@ -7,19 +7,19 @@
  * Author URI: https://woocommerce.com/
  * Text Domain: woocommerce-admin
  * Domain Path: /languages
- * Version: 2.2.6
- * Requires at least: 5.4
+ * Version: 3.3.2
+ * Requires at least: 5.6
  * Requires PHP: 7.0
  *
- * WC requires at least: 4.8.0
- * WC tested up to: 5.0.0
+ * WC requires at least: 5.7.0
+ * WC tested up to: 5.9.0
  *
  * @package WooCommerce\Admin
  */
 
 defined( 'ABSPATH' ) || exit;
 
-use \Automattic\WooCommerce\Admin\FeaturePlugin;
+use Automattic\WooCommerce\Internal\Admin\FeaturePlugin;
 use \Automattic\WooCommerce\Admin\Loader;
 
 /**

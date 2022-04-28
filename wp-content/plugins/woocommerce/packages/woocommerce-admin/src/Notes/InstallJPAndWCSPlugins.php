@@ -33,6 +33,9 @@ class InstallJPAndWCSPlugins {
 	public function __construct() {
 		add_action( 'woocommerce_note_action_install-jp-and-wcs-plugins', array( $this, 'install_jp_and_wcs_plugins' ) );
 		add_action( 'activated_plugin', array( $this, 'action_note' ) );
+		add_action( 'woocommerce_plugins_install_api_error', array( $this, 'on_install_error' ) );
+		add_action( 'woocommerce_plugins_install_error', array( $this, 'on_install_error' ) );
+		add_action( 'woocommerce_plugins_activate_error', array( $this, 'on_install_error' ) );
 	}
 
 	/**
@@ -76,7 +79,7 @@ class InstallJPAndWCSPlugins {
 		}
 
 		// Action any notes with a matching name.
-		$data_store = \WC_Data_Store::load( 'admin-note' );
+		$data_store = Notes::load_data_store();
 		$note_ids   = $data_store->get_notes_with_name( self::NOTE_NAME );
 
 		foreach ( $note_ids as $note_id ) {
@@ -122,5 +125,19 @@ class InstallJPAndWCSPlugins {
 		$activate_request = array( 'plugins' => $plugin );
 
 		$installer->activate_plugins( $activate_request );
+	}
+
+	/**
+	 * Create an alert notification in response to an error installing a plugin.
+	 *
+	 * @param string $slug The slug of the plugin being installed.
+	 */
+	public function on_install_error( $slug ) {
+		// Exit early if we're not installing the Jetpack or the WooCommerce Shipping & Tax plugins.
+		if ( 'jetpack' !== $slug && 'woocommerce-services' !== $slug ) {
+			return;
+		}
+
+		self::possibly_add_note();
 	}
 }

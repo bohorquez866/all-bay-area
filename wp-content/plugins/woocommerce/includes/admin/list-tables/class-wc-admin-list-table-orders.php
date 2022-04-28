@@ -145,6 +145,7 @@ class WC_Admin_List_Table_Orders extends WC_Admin_List_Table {
 		$actions['mark_processing'] = __( 'Change status to processing', 'woocommerce' );
 		$actions['mark_on-hold']    = __( 'Change status to on-hold', 'woocommerce' );
 		$actions['mark_completed']  = __( 'Change status to completed', 'woocommerce' );
+		$actions['mark_cancelled']  = __( 'Change status to cancelled', 'woocommerce' );
 
 		if ( wc_string_to_bool( get_option( 'woocommerce_allow_bulk_remove_personal_data', 'no' ) ) ) {
 			$actions['remove_personal_data'] = __( 'Remove personal data', 'woocommerce' );
@@ -454,6 +455,7 @@ class WC_Admin_List_Table_Orders extends WC_Admin_List_Table {
 				'method_id',
 				'cost',
 				'_reduced_stock',
+				'_restock_refunded_items',
 			)
 		);
 
@@ -505,7 +507,7 @@ class WC_Admin_List_Table_Orders extends WC_Admin_List_Table {
 							$html .= '<div class="wc-order-item-sku">' . esc_html( $product_object->get_sku() ) . '</div>';
 						}
 
-						$meta_data = $item->get_formatted_meta_data( '' );
+						$meta_data = $item->get_all_formatted_meta_data( '' );
 
 						if ( $meta_data ) {
 							$html .= '<table cellspacing="0" class="wc-order-item-meta">';

@@ -3,8 +3,8 @@
 get_header(); ?>
 <section class="header-img">
     <figure class="logo">
-        <a href="<?php echo esc_url( home_url( '/' ) ); ?>">
-            <img src="<?php the_field('logo','options') ?>" alt="Logo">
+        <a href="<?php echo esc_url(home_url('/')); ?>">
+            <img src="<?php the_field('logo', 'options') ?>" alt="Logo">
         </a>
     </figure>
     <figure class="hero-img">
@@ -31,7 +31,7 @@ get_header(); ?>
 
         <?php echo do_shortcode('[title_about]'); ?>
 
-        <a href="<?php echo esc_url( home_url( '/about-us' ) ); ?>"
+        <a href="<?php echo esc_url(home_url('/about-us')); ?>"
             class="btn btn--yellow"><?php the_field('label_about_inicio') ?></a>
     </article>
 </section>
@@ -39,8 +39,9 @@ get_header(); ?>
 <section class="home-value home-value-slider">
     <?php echo do_shortcode('[title_values]'); ?>
     <div class="swiper-wrapper">
-        <?php if( have_rows('lista_values') ): $a = 0  ?>
-        <?php while( have_rows('lista_values') ): the_row(); $a++ ?>
+        <?php if (have_rows('lista_values')) : $a = 0  ?>
+        <?php while (have_rows('lista_values')) : the_row();
+                $a++ ?>
         <article class="home-value__item swiper-slide">
             <figure class="value-img">
                 <img src="<?php the_sub_field('lista_values_imagen') ?>"
@@ -48,8 +49,8 @@ get_header(); ?>
             </figure>
             <h3><?php the_sub_field('lista_values_titulo') ?></h3>
             <p><?php the_sub_field('lista_values_texto') ?></p>
-            <a href="<?php echo esc_url( home_url( '/about-us' ) ); ?>" class="read-more"><i class="icon-cross"></i>
-                <?php _e('Read More','allbayarea')  ?></a>
+            <a href="<?php echo esc_url(home_url('/about-us')); ?>" class="read-more"><i class="icon-cross"></i>
+                <?php _e('Read More', 'allbayarea')  ?></a>
         </article>
         <?php endwhile; ?>
         <?php endif; ?>
@@ -61,36 +62,37 @@ get_header(); ?>
 <section class="home-services">
     <h2>
         <?php
-            $title = get_field('titulo_services_inicio');
-            $title_array = explode('/', $title);
-            $first_word = $title_array[0];
-            $second_word = $title_array[1];
+        $title = get_field('titulo_services_inicio');
+        $title_array = explode('/', $title);
+        $first_word = $title_array[0];
+        $second_word = $title_array[1];
         ?>
         <p><?php echo $first_word; ?></p>
         <strong><?php echo $second_word; ?></strong>
     </h2>
 
     <p>
-        <?php the_field('texto_services_inicio','options'); ?>
+        <?php the_field('texto_services_inicio', 'options'); ?>
     </p>
     <article class="home-services__item">
         <div class="swiper-pagination"></div>
         <ul class="swiper-wrapper">
             <?php
-                $args = array( 
-                    'post_type' => 'service', 
-                    'post_status' => 'publish',
-                    'posts_per_page' => -1,
-                );
-                $wp_query = new WP_Query($args); ?>
-            <?php if($wp_query->have_posts()) : $a = 0 ?>
-            <?php while ($wp_query->have_posts()) : $wp_query->the_post(); $a++ ?>
+            $args = array(
+                'post_type' => 'service',
+                'post_status' => 'publish',
+                'posts_per_page' => -1,
+            );
+            $wp_query = new WP_Query($args); ?>
+            <?php if ($wp_query->have_posts()) : $a = 0 ?>
+            <?php while ($wp_query->have_posts()) : $wp_query->the_post();
+                    $a++ ?>
             <li class="swiper-slide">
                 <img src="<?php the_field('image_home_service'); ?>" alt="<?php the_title(); ?>">
                 <h3><?php the_field('categoria_service'); ?></h3>
                 <p><?php the_excerpt_max_charlength(60); ?></p>
-                <a href="<?php echo esc_url( home_url( '/services' ) ); ?>" class="read-more"><i class="icon-cross"></i>
-                    <?php _e('Read More','allbayarea')  ?></a>
+                <a href="<?php echo esc_url(home_url('/services')); ?>" class="read-more"><i class="icon-cross"></i>
+                    <?php _e('Read More', 'allbayarea')  ?></a>
             </li>
             <?php endwhile; ?>
             <?php endif; ?>
@@ -103,10 +105,10 @@ get_header(); ?>
 <section class="home-types">
     <h2>
         <?php
-            $title = get_field('titulo_how_we_work_inicio');
-            $title_array = explode('/', $title);
-            $first_word = $title_array[0];
-            $second_word = $title_array[1];
+        $title = get_field('titulo_how_we_work_inicio');
+        $title_array = explode('/', $title);
+        $first_word = $title_array[0];
+        $second_word = $title_array[1];
         ?>
         <p><?php echo $first_word; ?></p>
         <strong><?php echo $second_word; ?></strong>
@@ -116,8 +118,9 @@ get_header(); ?>
     <article class="home-types__item">
         <div class="swiper-pagination"></div>
         <div class="swiper-wrapper">
-            <?php if( have_rows('lista_how_we_work_inicio') ): $c = 0  ?>
-            <?php while( have_rows('lista_how_we_work_inicio') ): the_row(); $c++ ?>
+            <?php if (have_rows('lista_how_we_work_inicio')) : $c = 0  ?>
+            <?php while (have_rows('lista_how_we_work_inicio')) : the_row();
+                    $c++ ?>
             <div class="swiper-slide">
                 <?php the_sub_field('editor_lista_how_we_work_inicio'); ?>
             </div>
@@ -128,10 +131,10 @@ get_header(); ?>
 
     <div class="home-types__footer">
         <?php
-            $title = get_field('sub_titulo_how_we_work_inicio');
-            $title_array = explode('/', $title);
-            $first_word = $title_array[0];
-            $second_word = $title_array[1];
+        $title = get_field('sub_titulo_how_we_work_inicio');
+        $title_array = explode('/', $title);
+        $first_word = $title_array[0];
+        $second_word = $title_array[1];
         ?>
         <strong><?php echo $first_word; ?></strong>
         <p><?php echo $second_word; ?></p>
@@ -144,10 +147,10 @@ get_header(); ?>
 <section class="home-testimonies" style="background-image: url(<?php the_field('background_comments_inicio'); ?>)">
     <h2>
         <?php
-            $title = get_field('titulo_comments_inicio');
-            $title_array = explode('/', $title);
-            $first_word = $title_array[0];
-            $second_word = $title_array[1];
+        $title = get_field('titulo_comments_inicio');
+        $title_array = explode('/', $title);
+        $first_word = $title_array[0];
+        $second_word = $title_array[1];
         ?>
         <p><?php echo $first_word; ?></p>
         <strong><?php echo $second_word; ?></strong>
@@ -155,8 +158,9 @@ get_header(); ?>
     <article class=" home-testimonies__item">
         <div class="swiper-pagination"></div>
         <ul class="swiper-wrapper">
-            <?php if( have_rows('lista_comments_inicio') ): $d = 0  ?>
-            <?php while( have_rows('lista_comments_inicio') ): the_row(); $d++ ?>
+            <?php if (have_rows('lista_comments_inicio')) : $d = 0  ?>
+            <?php while (have_rows('lista_comments_inicio')) : the_row();
+                    $d++ ?>
             <li class="swiper-slide">
                 <figure>
                     <img src="<?php the_sub_field('imagen_lista_comments_inicio'); ?>"
@@ -176,26 +180,26 @@ get_header(); ?>
     <article class="home-contact__info">
         <h2>
             <?php
-                $title = get_field('titulo_contactenos','options');
-                $title_array = explode('/', $title);
-                $first_word = $title_array[0];
-                $second_word = $title_array[1];
+            $title = get_field('titulo_contactenos', 'options');
+            $title_array = explode('/', $title);
+            $first_word = $title_array[0];
+            $second_word = $title_array[1];
             ?>
             <p><?php echo $first_word; ?></p>
             <strong><?php echo $second_word; ?></strong>
         </h2>
-        <p><?php the_field('texto_contactenos','options'); ?></p>
+        <p><?php the_field('texto_contactenos', 'options'); ?></p>
     </article>
     <div class="home-contact__form">
         <?php
-            $post_object = get_field('formulario_contactenos','options');
-            if( $post_object ): 
-                $post = $post_object;
-                setup_postdata( $post ); 
-                $cf7_id = $p->ID;
-                echo do_shortcode( '[contact-form-7 id="'.$cf7_id.'" ]' ); 
-                wp_reset_query();
-            endif;
+        $post_object = get_field('formulario_contactenos', 'options');
+        if ($post_object) :
+            $post = $post_object;
+            setup_postdata($post);
+            $cf7_id = $p->ID;
+            echo do_shortcode('[contact-form-7 id="' . $cf7_id . '" ]');
+            wp_reset_query();
+        endif;
         ?>
     </div>
 </section>

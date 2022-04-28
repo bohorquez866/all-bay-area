@@ -206,17 +206,31 @@ export const AddToCartFormStateContextProvider = ( {
 	 */
 	useEffect( () => {
 		if ( addToCartFormState.status === STATUS.AFTER_PROCESSING ) {
+			// @todo: This data package differs from what is passed through in
+			// the checkout state context. Should we introduce a "context"
+			// property in the data package for this emitted event so that
+			// observers are able to know what context the event is firing in?
 			const data = {
 				processingResponse: addToCartFormState.processingResponse,
 			};
 
-			const handleErrorResponse = ( response ) => {
-				if ( response.message ) {
-					const errorOptions = response.messageContext
-						? { context: response.messageContext }
-						: undefined;
-					addErrorNotice( response.message, errorOptions );
-				}
+			const handleErrorResponse = ( observerResponses ) => {
+				let handled = false;
+				observerResponses.forEach( ( response ) => {
+					const { message, messageContext } = response;
+					if (
+						( isErrorResponse( response ) ||
+							isFailResponse( response ) ) &&
+						message
+					) {
+						const errorOptions = messageContext
+							? { context: messageContext }
+							: undefined;
+						handled = true;
+						addErrorNotice( message, errorOptions );
+					}
+				} );
+				return handled;
 			};
 
 			if ( addToCartFormState.hasError ) {
@@ -225,13 +239,8 @@ export const AddToCartFormStateContextProvider = ( {
 					currentObservers,
 					EMIT_TYPES.ADD_TO_CART_AFTER_PROCESSING_WITH_ERROR,
 					data
-				).then( ( response ) => {
-					if (
-						isErrorResponse( response ) ||
-						isFailResponse( response )
-					) {
-						handleErrorResponse( response );
-					} else {
+				).then( ( observerResponses ) => {
+					if ( ! handleErrorResponse( observerResponses ) ) {
 						// no error handling in place by anything so let's fall back to default
 						const message =
 							data.processingResponse?.message ||
@@ -252,12 +261,8 @@ export const AddToCartFormStateContextProvider = ( {
 				currentObservers,
 				EMIT_TYPES.ADD_TO_CART_AFTER_PROCESSING_WITH_SUCCESS,
 				data
-			).then( ( response ) => {
-				if (
-					isErrorResponse( response ) ||
-					isFailResponse( response )
-				) {
-					handleErrorResponse( response );
+			).then( ( observerResponses ) => {
+				if ( handleErrorResponse( observerResponses ) ) {
 					// this will set an error which will end up
 					// triggering the onAddToCartAfterProcessingWithError emitter.
 					// and then setting to IDLE state.
@@ -291,9 +296,11 @@ export const AddToCartFormStateContextProvider = ( {
 		productHasOptions: product.has_options || false,
 		supportsFormElements,
 		showFormElements: showFormElements && supportsFormElements,
-		quantity: addToCartFormState.quantity,
-		minQuantity: 1,
-		maxQuantity: product.quantity_limit || 99,
+		quantity:
+			addToCartFormState.quantity || product?.add_to_cart?.minimum || 1,
+		minQuantity: product?.add_to_cart?.minimum || 1,
+		maxQuantity: product?.add_to_cart?.maximum || 99,
+		multipleOf: product?.add_to_cart?.multiple_of || 1,
 		requestParams: addToCartFormState.requestParams,
 		isIdle: addToCartFormState.status === STATUS.IDLE,
 		isDisabled: addToCartFormState.status === STATUS.DISABLED,

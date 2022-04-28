@@ -11,6 +11,6 @@ if ( !defined( 'WP_UNINSTALL_PLUGIN' ) )
     exit();
 
 function brozzme_db_prefix_plugin_uninstall(){
-
-    
+    delete_option('dbprefix_old_dbprefix');
+    delete_option('dbprefix_new');
 }

@@ -19,6 +19,28 @@ class Features {
 	protected static $instance = null;
 
 	/**
+	 * Optional features
+	 *
+	 * @var array
+	 */
+	protected static $optional_features = array(
+		'navigation'                 => array( 'default' => 'no' ),
+		'settings'                   => array( 'default' => 'no' ),
+		'analytics'                  => array( 'default' => 'yes' ),
+		'remote-inbox-notifications' => array( 'default' => 'yes' ),
+	);
+
+	/**
+	 * Beta features
+	 *
+	 * @var array
+	 */
+	protected static $beta_features = array(
+		'navigation',
+		'settings',
+	);
+
+	/**
 	 * Get class instance.
 	 */
 	public static function get_instance() {
@@ -32,6 +54,7 @@ class Features {
 	 * Constructor.
 	 */
 	public function __construct() {
+		$this->register_internal_class_aliases();
 		// Load feature before WooCommerce update hooks.
 		add_action( 'init', array( __CLASS__, 'load_features' ), 4 );
 		add_filter( 'woocommerce_get_sections_advanced', array( __CLASS__, 'add_features_section' ) );
@@ -43,7 +66,7 @@ class Features {
 	}
 
 	/**
-	 * Gets a build configured array of enabled WooCommerce Admin features/sections.
+	 * Gets a build configured array of enabled WooCommerce Admin features/sections, but does not respect optionally disabled features.
 	 *
 	 * @return array Enabled Woocommerce Admin features/sections.
 	 */
@@ -52,20 +75,20 @@ class Features {
 	}
 
 	/**
-	 * Gets the beta feature options as an associative array that can be toggled on or off.
+	 * Gets the optional feature options as an associative array that can be toggled on or off.
 	 *
 	 * @return array
 	 */
-	public static function get_beta_feature_options() {
+	public static function get_optional_feature_options() {
 		$features = [];
 
-		$navigation_class = self::get_feature_class( 'navigation' );
-		$settings_class   = self::get_feature_class( 'settings' );
-		if ( $navigation_class ) {
-			$features['navigation'] = $navigation_class::TOGGLE_OPTION_NAME;
-			$features['settings']   = $settings_class::TOGGLE_OPTION_NAME;
-		}
+		foreach ( array_keys( self::$optional_features ) as $optional_feature_key ) {
+			$feature_class = self::get_feature_class( $optional_feature_key );
 
+			if ( $feature_class ) {
+				$features[ $optional_feature_key ] = $feature_class::TOGGLE_OPTION_NAME;
+			}
+		}
 		return $features;
 	}
 
@@ -117,40 +140,67 @@ class Features {
 	}
 
 	/**
-	 * Check if a feature is enabled.  Defaults to true for all features unless they are in beta.
+	 * Gets a build configured array of enabled WooCommerce Admin respecting optionally disabled features.
+	 *
+	 * @return array Enabled Woocommerce Admin features/sections.
+	 */
+	public static function get_available_features() {
+		$features                      = self::get_features();
+		$optional_feature_keys         = array_keys( self::$optional_features );
+		$optional_features_unavailable = [];
+
+		/**
+		 * Filter allowing WooCommerce Admin optional features to be disabled.
+		 *
+		 * @param bool $disabled False.
+		 */
+		if ( apply_filters( 'woocommerce_admin_disabled', false ) ) {
+			return array_values( array_diff( $features, $optional_feature_keys ) );
+		}
+
+		foreach ( $optional_feature_keys as $optional_feature_key ) {
+			$feature_class = self::get_feature_class( $optional_feature_key );
+
+			if ( $feature_class ) {
+				$default = isset( self::$optional_features[ $optional_feature_key ]['default'] ) ?
+					self::$optional_features[ $optional_feature_key ]['default'] :
+					'no';
+
+				// Check if the feature is currently being enabled, if it is continue.
+				/* phpcs:disable WordPress.Security.NonceVerification */
+				$feature_option = $feature_class::TOGGLE_OPTION_NAME;
+				if ( isset( $_POST[ $feature_option ] ) && '1' === $_POST[ $feature_option ] ) {
+					continue;
+				}
+
+				if ( 'yes' !== get_option( $feature_class::TOGGLE_OPTION_NAME, $default ) ) {
+					$optional_features_unavailable[] = $optional_feature_key;
+				}
+			}
+		}
+
+		return array_values( array_diff( $features, $optional_features_unavailable ) );
+	}
+
+	/**
+	 * Check if a feature is enabled.
 	 *
 	 * @param string $feature Feature slug.
 	 * @return bool
 	 */
 	public static function is_enabled( $feature ) {
-		if ( ! self::exists( $feature ) ) {
-			return false;
-		}
-
-		$features = self::get_beta_feature_options();
-
-		if ( isset( $features[ $feature ] ) ) {
-			$feature_option = $features[ $feature ];
-			// Check if the feature is currently being enabled.
-			/* phpcs:disable WordPress.Security.NonceVerification */
-			if ( isset( $_POST[ $feature_option ] ) && '1' === $_POST[ $feature_option ] ) {
-				return true;
-			}
-
-			return 'yes' === get_option( $feature_option, 'no' );
-		}
-
-		return true;
+		$available_features = self::get_available_features();
+		return in_array( $feature, $available_features, true );
 	}
 
 	/**
-	 * Enable a toggleable beta feature.
+	 * Enable a toggleable optional feature.
 	 *
 	 * @param string $feature Feature name.
 	 * @return bool
 	 */
 	public static function enable( $feature ) {
-		$features = self::get_beta_feature_options();
+		$features = self::get_optional_feature_options();
 
 		if ( isset( $features[ $feature ] ) ) {
 			update_option( $features[ $feature ], 'yes' );
@@ -161,13 +211,13 @@ class Features {
 	}
 
 	/**
-	 * Disable a toggleable beta feature.
+	 * Disable a toggleable optional feature.
 	 *
 	 * @param string $feature Feature name.
 	 * @return bool
 	 */
 	public static function disable( $feature ) {
-		$features = self::get_beta_feature_options();
+		$features = self::get_optional_feature_options();
 
 		if ( isset( $features[ $feature ] ) ) {
 			update_option( $features[ $feature ], 'no' );
@@ -188,7 +238,7 @@ class Features {
 			return;
 		}
 
-		foreach ( self::get_features() as $feature ) {
+		foreach ( self::$beta_features as $feature ) {
 			self::disable( $feature );
 		}
 	}
@@ -230,8 +280,17 @@ class Features {
 			array()
 		);
 
-		if ( empty( $features ) ) {
+		$features_disabled = apply_filters( 'woocommerce_admin_disabled', false );
+
+		if ( ! $features_disabled && empty( $features ) ) {
 			return $settings;
+		}
+
+		$desc          = __( 'Start using new features that are being progressively rolled out to improve the store management experience.', 'woocommerce' );
+		$disabled_desc = __( 'WooCommerce features have been disabled.', 'woocommerce' );
+
+		if ( $features_disabled ) {
+			$GLOBALS['hide_save_button'] = true;
 		}
 
 		return array_merge(
@@ -239,11 +298,11 @@ class Features {
 				array(
 					'title' => __( 'Features', 'woocommerce' ),
 					'type'  => 'title',
-					'desc'  => __( 'Start using new features that are being progressively rolled out to improve the store management experience.', 'woocommerce' ),
+					'desc'  => $features_disabled ? $disabled_desc : $desc,
 					'id'    => 'features_options',
 				),
 			),
-			$features,
+			$features_disabled ? array() : $features,
 			array(
 				array(
 					'type' => 'sectionend',
@@ -267,6 +326,10 @@ class Features {
 			return;
 		}
 		$tracking_enabled = get_option( 'woocommerce_allow_tracking', 'no' );
+
+		if ( empty( self::$beta_features ) ) {
+			return;
+		}
 
 		if ( 'yes' === $tracking_enabled ) {
 			return;
@@ -326,5 +389,35 @@ class Features {
 
 		$admin_body_class = implode( ' ', array_unique( $classes ) );
 		return " $admin_body_class ";
+	}
+
+	/**
+	 * Alias internal features classes to make them backward compatible.
+	 * We've moved our feature classes to src-internal as part of merging this
+	 * repository with WooCommerce Core to form a monorepo.
+	 * See https://wp.me/p90Yrv-2HY for details.
+	 */
+	private function register_internal_class_aliases() {
+		$aliases = array(
+			// new class => original class (this will be aliased).
+			'Automattic\WooCommerce\Internal\Admin\WCPayPromotion\Init' => 'Automattic\WooCommerce\Admin\Features\WcPayPromotion\Init',
+			'Automattic\WooCommerce\Internal\Admin\RemoteFreeExtensions\Init' => 'Automattic\WooCommerce\Admin\Features\RemoteFreeExtensions\Init',
+			'Automattic\WooCommerce\Internal\Admin\ActivityPanels' => 'Automattic\WooCommerce\Admin\Features\ActivityPanels',
+			'Automattic\WooCommerce\Internal\Admin\Analytics' => 'Automattic\WooCommerce\Admin\Features\Analytics',
+			'Automattic\WooCommerce\Internal\Admin\Coupons' => 'Automattic\WooCommerce\Admin\Features\Coupons',
+			'Automattic\WooCommerce\Internal\Admin\CouponsMovedTrait' => 'Automattic\WooCommerce\Admin\Features\CouponsMovedTrait',
+			'Automattic\WooCommerce\Internal\Admin\CustomerEffortScoreTracks' => 'Automattic\WooCommerce\Admin\Features\CustomerEffortScoreTracks',
+			'Automattic\WooCommerce\Internal\Admin\Homescreen' => 'Automattic\WooCommerce\Admin\Features\Homescreen',
+			'Automattic\WooCommerce\Internal\Admin\Marketing' => 'Automattic\WooCommerce\Admin\Features\Marketing',
+			'Automattic\WooCommerce\Internal\Admin\MobileAppBanner' => 'Automattic\WooCommerce\Admin\Features\MobileAppBanner',
+			'Automattic\WooCommerce\Internal\Admin\RemoteInboxNotifications' => 'Automattic\WooCommerce\Admin\Features\RemoteInboxNotifications',
+			'Automattic\WooCommerce\Internal\Admin\Settings' => 'Automattic\WooCommerce\Admin\Features\Settings',
+			'Automattic\WooCommerce\Internal\Admin\ShippingLabelBanner' => 'Automattic\WooCommerce\Admin\Features\ShippingLabelBanner',
+			'Automattic\WooCommerce\Internal\Admin\ShippingLabelBannerDisplayRules' => 'Automattic\WooCommerce\Admin\Features\ShippingLabelBannerDisplayRules',
+			'Automattic\WooCommerce\Internal\Admin\WcPayWelcomePage' => 'Automattic\WooCommerce\Admin\Features\WcPayWelcomePage',
+		);
+		foreach ( $aliases as $new_class => $orig_class ) {
+			class_alias( $new_class, $orig_class );
+		}
 	}
 }

@@ -35,3 +35,19 @@
 	list-style-position: outside;
 	list-style-image: none;
 }
+
+.form-space{
+	padding-bottom:2px;
+}
+
+.doc_toggle:hover, .see_all_table:hover, .add_table:hover{
+	cursor: pointer;
+}
+
+.add_table{
+	line-height: 2rem;
+	padding: 5px;
+
+	border: 1px solid #cccccc;
+	border-radius: 4px;
+}

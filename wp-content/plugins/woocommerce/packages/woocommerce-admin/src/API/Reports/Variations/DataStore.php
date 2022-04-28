@@ -112,6 +112,39 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 	}
 
 	/**
+	 * Generate a subquery for order_item_id based on the attribute filters.
+	 *
+	 * @param array $query_args Query arguments supplied by the user.
+	 * @return string
+	 */
+	protected function get_order_item_by_attribute_subquery( $query_args ) {
+		$order_product_lookup_table = self::get_db_table_name();
+		$attribute_subqueries       = $this->get_attribute_subqueries( $query_args, $order_product_lookup_table );
+
+		if ( $attribute_subqueries['join'] && $attribute_subqueries['where'] ) {
+			// Perform a subquery for DISTINCT order items that match our attribute filters.
+			$attr_subquery = new SqlQuery( $this->context . '_attribute_subquery' );
+			$attr_subquery->add_sql_clause( 'select', "DISTINCT {$order_product_lookup_table}.order_item_id" );
+			$attr_subquery->add_sql_clause( 'from', $order_product_lookup_table );
+
+			if ( $this->should_exclude_simple_products( $query_args ) ) {
+				$attr_subquery->add_sql_clause( 'where', "AND {$order_product_lookup_table}.variation_id != 0" );
+			}
+
+			foreach ( $attribute_subqueries['join'] as $attribute_join ) {
+				$attr_subquery->add_sql_clause( 'join', $attribute_join );
+			}
+
+			$operator = $this->get_match_operator( $query_args );
+			$attr_subquery->add_sql_clause( 'where', 'AND (' . implode( " {$operator} ", $attribute_subqueries['where'] ) . ')' );
+
+			return "AND {$order_product_lookup_table}.order_item_id IN ({$attr_subquery->get_query_statement()})";
+		}
+
+		return false;
+	}
+
+	/**
 	 * Updates the database query with parameters used for Products report: categories and order status.
 	 *
 	 * @param array $query_args Query arguments supplied by the user.
@@ -120,6 +153,7 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 		global $wpdb;
 		$order_product_lookup_table = self::get_db_table_name();
 		$order_stats_lookup_table   = $wpdb->prefix . 'wc_order_stats';
+		$order_item_meta_table      = $wpdb->prefix . 'woocommerce_order_itemmeta';
 		$where_subquery             = array();
 
 		$this->add_time_period_sql_params( $query_args, $order_product_lookup_table );
@@ -146,7 +180,9 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 		if ( $included_variations ) {
 			$this->subquery->add_sql_clause( 'where', "AND {$order_product_lookup_table}.variation_id IN ({$included_variations})" );
 		} elseif ( ! $included_products ) {
-			$this->subquery->add_sql_clause( 'where', "AND {$order_product_lookup_table}.variation_id != 0" );
+			if ( $this->should_exclude_simple_products( $query_args ) ) {
+				$this->subquery->add_sql_clause( 'where', "AND {$order_product_lookup_table}.variation_id != 0" );
+			}
 		}
 
 		$order_status_filter = $this->get_status_subquery( $query_args );
@@ -155,18 +191,15 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 			$this->subquery->add_sql_clause( 'where', "AND ( {$order_status_filter} )" );
 		}
 
-		$attribute_subqueries = $this->get_attribute_subqueries( $query_args );
-		if ( $attribute_subqueries['join'] && $attribute_subqueries['where'] ) {
+		$attribute_order_items_subquery = $this->get_order_item_by_attribute_subquery( $query_args );
+		if ( $attribute_order_items_subquery ) {
 			// JOIN on product lookup if we haven't already.
 			if ( ! $order_status_filter ) {
 				$this->subquery->add_sql_clause( 'join', "JOIN {$order_product_lookup_table} ON {$order_stats_lookup_table}.order_id = {$order_product_lookup_table}.order_id" );
 			}
-			// Add JOINs for matching attributes.
-			foreach ( $attribute_subqueries['join'] as $attribute_join ) {
-				$this->subquery->add_sql_clause( 'join', $attribute_join );
-			}
-			// Add WHEREs for matching attributes.
-			$where_subquery = array_merge( $where_subquery, $attribute_subqueries['where'] );
+
+			// Add subquery for matching attributes to WHERE.
+			$this->subquery->add_sql_clause( 'where', $attribute_order_items_subquery );
 		}
 
 		if ( 0 < count( $where_subquery ) ) {
@@ -215,7 +248,10 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 
 				// Fall back to the parent product if the variation can't be found.
 				$extended_attributes_product = is_a( $variation_product, 'WC_Product' ) ? $variation_product : $parent_product;
-
+				// If both product and variation is not found, set deleted to true.
+				if ( ! $extended_attributes_product ) {
+					$extended_info['deleted'] = true;
+				}
 				foreach ( $extended_attributes as $extended_attribute ) {
 					$function = 'get_' . $extended_attribute;
 					if ( is_callable( array( $extended_attributes_product, $function ) ) ) {
@@ -252,6 +288,88 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 				$extended_info = $this->cast_numbers( $extended_info );
 			}
 			$products_data[ $key ]['extended_info'] = $extended_info;
+		}
+	}
+
+	/**
+	 * Returns if simple products should be excluded from the report.
+	 *
+	 * @internal
+	 *
+	 * @param array $query_args Query parameters.
+	 *
+	 * @return boolean
+	 */
+	protected function should_exclude_simple_products( array $query_args ) {
+		return apply_filters( 'experimental_woocommerce_analytics_variations_should_exclude_simple_products', true, $query_args );
+	}
+
+	/**
+	 * Fill missing extended_info.name for the deleted products.
+	 *
+	 * @param array $products Product data.
+	 */
+	protected function fill_deleted_product_name( array &$products ) {
+		global $wpdb;
+		$product_variation_ids = [];
+		// Find products with missing extended_info.name.
+		foreach ( $products as $key => $product ) {
+			if ( ! isset( $product['extended_info']['name'] ) ) {
+				$product_variation_ids[ $key ] = [
+					'product_id'   => $product['product_id'],
+					'variation_id' => $product['variation_id'],
+				];
+			}
+		}
+
+		if ( ! count( $product_variation_ids ) ) {
+			return;
+		}
+
+		$where_clauses = implode(
+			' or ',
+			array_map(
+				function( $ids ) {
+					return "(
+						product_lookup.product_id = {$ids['product_id']}
+						and
+						product_lookup.variation_id = {$ids['variation_id']}
+                    )";
+				},
+				$product_variation_ids
+			)
+		);
+
+		$query = "
+			select
+				product_lookup.product_id,
+				product_lookup.variation_id,
+				order_items.order_item_name
+			from
+				{$wpdb->prefix}wc_order_product_lookup as product_lookup
+				left join {$wpdb->prefix}woocommerce_order_items as order_items
+				on product_lookup.order_item_id = order_items.order_item_id
+			where
+				{$where_clauses}
+			group by
+				product_lookup.product_id,
+				product_lookup.variation_id,
+				order_items.order_item_name
+		";
+
+		// phpcs:ignore
+		$results = $wpdb->get_results( $query );
+		$index   = [];
+		foreach ( $results as $result ) {
+			$index[ $result->product_id . '_' . $result->variation_id ] = $result->order_item_name;
+		}
+
+		foreach ( $product_variation_ids as $product_key => $ids ) {
+			$product   = $products[ $product_key ];
+			$index_key = $product['product_id'] . '_' . $product['variation_id'];
+			if ( isset( $index[ $index_key ] ) ) {
+				$products[ $product_key ]['extended_info']['name'] = $index[ $index_key ];
+			}
 		}
 	}
 
@@ -335,11 +453,13 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 
 				$variations_query = $this->get_query_statement();
 			} else {
+				/* phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared */
 				$db_records_count = (int) $wpdb->get_var(
 					"SELECT COUNT(*) FROM (
 						{$this->subquery->get_query_statement()}
 					) AS tt"
-				); // WPCS: cache ok, DB call ok, unprepared SQL ok.
+				);
+				/* phpcs:enable */
 
 				$total_results = $db_records_count;
 				$total_pages   = (int) ceil( $db_records_count / $params['per_page'] );
@@ -355,16 +475,22 @@ class DataStore extends ReportsDataStore implements DataStoreInterface {
 				$variations_query = $this->subquery->get_query_statement();
 			}
 
+			/* phpcs:disable WordPress.DB.PreparedSQL.NotPrepared */
 			$product_data = $wpdb->get_results(
 				$variations_query,
 				ARRAY_A
-			); // WPCS: cache ok, DB call ok, unprepared SQL ok.
+			);
+			/* phpcs:enable */
 
 			if ( null === $product_data ) {
 				return $data;
 			}
 
 			$this->include_extended_info( $product_data, $query_args );
+
+			if ( $query_args['extended_info'] ) {
+				$this->fill_deleted_product_name( $product_data );
+			}
 
 			$product_data = array_map( array( $this, 'cast_numbers' ), $product_data );
 			$data         = (object) array(

@@ -92,7 +92,7 @@ msgstr "Avant d'exécuter cet outil :"
 msgid ""
 "Make sure your <code>wp-config.php</code> file is <strong>writable</strong>."
 msgstr ""
-"Assuez-vous que le fichier <code>wp-config.php</code> soit "
+"Assurez-vous que le fichier <code>wp-config.php</code> soit "
 "<strong>modifiable</strong>."
 
 #: includes/brozzmeDbPSettings.php:157

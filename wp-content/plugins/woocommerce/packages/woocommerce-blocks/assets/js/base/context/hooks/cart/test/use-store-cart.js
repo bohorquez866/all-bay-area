@@ -17,6 +17,7 @@ jest.mock( '../../../providers/editor-context', () => ( {
 } ) );
 
 jest.mock( '@woocommerce/block-data', () => ( {
+	...jest.requireActual( '@woocommerce/block-data' ),
 	__esModule: true,
 	CART_STORE_KEY: 'test/store',
 } ) );
@@ -61,10 +62,11 @@ describe( 'useStoreCart', () => {
 			state: '',
 			postcode: '',
 			country: '',
+			phone: '',
 		},
 		shippingRates: previewCart.shipping_rates,
 		extensions: {},
-		shippingRatesLoading: false,
+		isLoadingRates: false,
 		cartHasCalculatedShipping: true,
 	};
 
@@ -86,6 +88,8 @@ describe( 'useStoreCart', () => {
 		hasCalculatedShipping: true,
 		extensions: {},
 		errors: [],
+		receiveCart: undefined,
+		paymentRequirements: [],
 	};
 	const mockCartTotals = {
 		currency_code: 'USD',
@@ -108,7 +112,7 @@ describe( 'useStoreCart', () => {
 		shippingAddress: mockShippingAddress,
 		shippingRates: [],
 		extensions: {},
-		shippingRatesLoading: false,
+		isLoadingRates: false,
 		cartHasCalculatedShipping: true,
 		receiveCart: undefined,
 		paymentRequirements: [],

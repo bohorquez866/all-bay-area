@@ -3,9 +3,11 @@
 Plugin Name: Brozzme DB Prefix change and DB Tools addon
 Plugin URI: https://brozzme.com/
 Description: Easily change your WordPress DB prefix, save time, increase security.
-Version: 1.2
+Version: 1.3.4
 Author: Benoti
 Author URI: https://brozzme.com
+Text Domain: brozzme-db-prefix-change
+
 */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -30,8 +32,8 @@ class brozzme_db_prefix{
         $this->plugin_name = 'Brozzme DB Prefix';
         $this->plugin_slug = 'brozzme-db-prefix-change';
         $this->settings_page_slug = 'brozzme-db-prefix';
-        $this->plugin_version = '1.2';
-        $this->plugin_txt_domain = 'brozzme-db-prefix';
+        $this->plugin_version = '1.3.2';
+        $this->plugin_txt_domain = 'brozzme-db-prefix-change';
 
         $this->_define_constants();
 
@@ -42,6 +44,7 @@ class brozzme_db_prefix{
 
         /* init */
         add_action( 'admin_enqueue_scripts', array( $this, '_add_settings_styles') );
+
         $this->_init();
 
     }
@@ -98,14 +101,9 @@ class brozzme_db_prefix{
      */
     public function _admin_page(){
 
-        if (!class_exists('brozzme_plugins_page')){
-            include_once ($this->directory_path . 'includes/brozzme_plugins_page.php');
-        }
-
         include_once $this->directory_path . 'includes/brozzme_db_prefix_core.php';
         include_once $this->directory_path . 'includes/brozzmeDbPSettings.php';
         new brozzmeDbPSettings();
-
     }
 
     /**
@@ -134,17 +132,27 @@ class brozzme_db_prefix{
 
 
     /**
-     *
+     * Check if wp-config is writable & if the table prefix is not empty
      */
     public function activate(){
+        global $wpdb;
 
+        if ( !is_writable(get_home_path() .'wp-config.php')){
+            deactivate_plugins(B7EDBP_BASENAME);
+            wp_die( "<strong>".$this->plugin_slug."</strong> requires <strong>a writable wp-config.php</strong>, and has been deactivated! Please change file permission and try again.<br /><br />Back to the WordPress <a href='".get_admin_url(null, 'plugins.php')."'>Plugins page</a>." );
+        }
+        if(empty($wpdb->prefix)){
+            deactivate_plugins(B7EDBP_BASENAME);
+            wp_die( "<strong>".$this->plugin_slug."</strong> requires <strong>your WordPress to have a table prefix</strong>, and has been deactivated! Please change file permission and try again.<br /><br />Back to the WordPress <a href='".get_admin_url(null, 'plugins.php')."'>Plugins page</a>." );
+        }
     }
 
     /**
      *
      */
-    public function desactivate(){
-
+    public function deactivate(){
+        delete_option('dbprefix_old_dbprefix');
+        delete_option('dbprefix_new');
     }
 }
 
